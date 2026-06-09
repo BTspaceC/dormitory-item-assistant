@@ -41,7 +41,10 @@ def prepare_batch_upload_df(df: pd.DataFrame) -> pd.DataFrame:
 
 def normalize_batch_columns(df: pd.DataFrame) -> pd.DataFrame:
     normalized = df.copy()
+    normalized.columns = [str(c).strip() for c in normalized.columns]
     rename_map = {}
+    if "物品描述" in normalized.columns and "用户描述" not in normalized.columns:
+        rename_map["物品描述"] = "用户描述"
     if "是否有保质期" in normalized.columns and BATCH_HAS_SHELF_LIFE_COLUMN not in normalized.columns:
         rename_map["是否有保质期"] = BATCH_HAS_SHELF_LIFE_COLUMN
     if "距离过期天数" in normalized.columns and BATCH_EXPIRE_DAYS_COLUMN not in normalized.columns:
@@ -222,6 +225,12 @@ def render_batch_mode(signature: tuple[int, int, int, str]) -> None:
         "编辑清单",
         "已使用天数默认 30 天，使用人数默认 1 人，不按共用处理；异常行会单独提示，不影响其他行。",
     )
+    def clear_batch_results() -> None:
+        if "batch_result_df" in st.session_state:
+            st.session_state["batch_result_df"] = None
+        if "batch_result" in st.session_state:
+            st.session_state["batch_result"] = None
+
     batch_df = st.data_editor(
         st.session_state["batch_input_df"],
         num_rows="dynamic",
@@ -229,7 +238,7 @@ def render_batch_mode(signature: tuple[int, int, int, str]) -> None:
         hide_index=True,
         column_config={
             "物品名称": st.column_config.TextColumn("物品名称", required=False),
-            "物品描述": st.column_config.TextColumn("物品描述"),
+            "用户描述": st.column_config.TextColumn("物品描述"),
             "剩余量(%)": st.column_config.NumberColumn("剩余量(%)", min_value=0, max_value=100, step=1),
             "周频次": st.column_config.NumberColumn("周频次", min_value=0, max_value=50, step=0.5),
             BATCH_HAS_SHELF_LIFE_COLUMN: st.column_config.CheckboxColumn(BATCH_HAS_SHELF_LIFE_COLUMN),
@@ -237,6 +246,7 @@ def render_batch_mode(signature: tuple[int, int, int, str]) -> None:
             "是否破损": st.column_config.CheckboxColumn("是否破损"),
         },
         key="batch_editor",
+        on_change=clear_batch_results,
     )
 
     if st.button("开始批量预测", type="primary", width='stretch'):

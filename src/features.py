@@ -138,9 +138,25 @@ def map_risk_label(user_judgment: str) -> str:
 
 
 def parse_used_days(value: Any) -> int:
-    text = text_or_empty(value)
+    # 优先尝试纯数值转换
+    if value is not None:
+        try:
+            import pandas as pd
+            if not pd.isna(value):
+                val = float(value)
+                if val == val:  # not NaN
+                    return int(val)
+        except (ValueError, TypeError):
+            pass
+
+    text = text_or_empty(value).strip()
     if not text:
         return 0
+    try:
+        return int(float(text))
+    except ValueError:
+        pass
+
     match = re.search(r"(\d+)\s*天", text)
     if match:
         return int(match.group(1))
@@ -160,22 +176,52 @@ def parse_used_days(value: Any) -> int:
 
 
 def parse_remaining_pct(value: Any) -> float:
-    text = text_or_empty(value)
+    # 优先尝试纯数值转换
+    if value is not None:
+        try:
+            import pandas as pd
+            if not pd.isna(value):
+                val = float(value)
+                if val == val:
+                    if 0.0 < val <= 1.0:
+                        return _bound_percent(val * 100.0)
+                    return _bound_percent(val)
+        except (ValueError, TypeError):
+            pass
+
+    text = text_or_empty(value).strip()
     if not text:
         return 50.0
+    try:
+        val = float(text)
+        if val == val:
+            if 0.0 < val <= 1.0:
+                return _bound_percent(val * 100.0)
+            return _bound_percent(val)
+    except ValueError:
+        pass
+
     match = re.search(r"(\d+(?:\.\d+)?)\s*%", text)
     if match:
         return _bound_percent(float(match.group(1)))
-    fraction_match = re.search(r"1\s*/\s*(\d+)", text)
+    
+    # 匹配任意分数，如 1/3, 2/3, 3/4 等
+    fraction_match = re.search(r"(\d+)\s*/\s*(\d+)", text)
     if fraction_match:
-        denominator = max(float(fraction_match.group(1)), 1.0)
-        return _bound_percent(100.0 / denominator)
+        numerator = float(fraction_match.group(1))
+        denominator = max(float(fraction_match.group(2)), 1.0)
+        return _bound_percent((numerator / denominator) * 100.0)
+
     if "半" in text:
         return 50.0
-    if "1/3" in text or "三分之一" in text:
+    if "三分之一" in text:
         return 33.0
-    if "2/3" in text or "三分之二" in text:
+    if "三分之二" in text:
         return 67.0
+    if "四分之三" in text:
+        return 75.0
+    if "四分之一" in text:
+        return 25.0
     if any(k in text for k in ["可继续", "仍可", "较多", "尚可", "充足"]):
         return 70.0
     if any(k in text for k in ["较少", "不多", "快用完", "剩约1", "剩1"]):
@@ -194,19 +240,50 @@ def _bound_percent(value: float) -> float:
 
 
 def parse_weekly_use_count(value: Any) -> float:
-    text = text_or_empty(value)
+    # 优先尝试纯数值转换
+    if value is not None:
+        try:
+            import pandas as pd
+            if not pd.isna(value):
+                val = float(value)
+                if val == val:
+                    return val
+        except (ValueError, TypeError):
+            pass
+
+    text = text_or_empty(value).strip()
     if not text:
         return 1.0
-    match = re.search(r"每周\s*(\d+)(?:\s*[-~到]\s*(\d+))?\s*次", text)
+    try:
+        val = float(text)
+        if val == val:
+            return val
+    except ValueError:
+        pass
+
+    # 匹配诸如 "2次" 的后缀
+    match = re.search(r"^(\d+(?:\.\d+)?)\s*次$", text)
+    if match:
+        return float(match.group(1))
+
+    match = re.search(r"每周\s*(\d+(?:\.\d+)?)(?:\s*[-~到]\s*(\d+(?:\.\d+)?))?\s*次", text)
     if match:
         first = float(match.group(1))
         second = float(match.group(2)) if match.group(2) else first
         return (first + second) / 2.0
-    match = re.search(r"每天\s*(\d+)(?:\s*[-~到]\s*(\d+))?\s*次", text)
+    match = re.search(r"每天\s*(\d+(?:\.\d+)?)(?:\s*[-~到]\s*(\d+(?:\.\d+)?))?\s*次", text)
     if match:
         first = float(match.group(1))
         second = float(match.group(2)) if match.group(2) else first
         return 7.0 * (first + second) / 2.0
+
+    cn_nums = {"一": 1.0, "二": 2.0, "三": 3.0, "四": 4.0, "五": 5.0, "六": 6.0, "七": 7.0, "八": 8.0, "九": 9.0, "十": 10.0}
+    for cn_char, num_val in cn_nums.items():
+        if f"每周{cn_char}次" in text:
+            return num_val
+        if f"每天{cn_char}次" in text:
+            return num_val * 7.0
+
     if "每天多次" in text:
         return 14.0
     if "每天或隔天" in text:
@@ -218,7 +295,7 @@ def parse_weekly_use_count(value: Any) -> float:
     if "每周多次" in text or "每周数次" in text:
         return 3.0
     if "每月" in text:
-        match = re.search(r"每月\s*(\d+)(?:\s*[-~到]\s*(\d+))?\s*次", text)
+        match = re.search(r"每月\s*(\d+(?:\.\d+)?)(?:\s*[-~到]\s*(\d+(?:\.\d+)?))?\s*次", text)
         if match:
             first = float(match.group(1))
             second = float(match.group(2)) if match.group(2) else first
@@ -230,9 +307,23 @@ def parse_weekly_use_count(value: Any) -> float:
 
 
 def parse_user_count(value: Any) -> int:
-    text = text_or_empty(value)
+    if value is not None:
+        try:
+            import pandas as pd
+            if not pd.isna(value):
+                val = int(float(value))
+                return max(1, val)
+        except (ValueError, TypeError):
+            pass
+
+    text = text_or_empty(value).strip()
     if not text:
         return 1
+    try:
+        return max(1, int(float(text)))
+    except ValueError:
+        pass
+
     match = re.search(r"(\d+)\s*人", text)
     if match:
         return max(1, int(match.group(1)))
@@ -242,21 +333,53 @@ def parse_user_count(value: Any) -> int:
 
 
 def parse_is_shared(value: Any) -> int:
-    text = text_or_empty(value)
+    if value is not None:
+        try:
+            import pandas as pd
+            if not pd.isna(value):
+                if isinstance(value, bool):
+                    return 1 if value else 0
+                val = float(value)
+                return 1 if val > 0 else 0
+        except (ValueError, TypeError):
+            pass
+
+    text = text_or_empty(value).strip()
+    if text.lower() in ("true", "1", "yes", "y", "t", "是"):
+        return 1
+    if text.lower() in ("false", "0", "no", "n", "f", "否"):
+        return 0
     return 1 if any(k in text for k in ["共用", "全寝", "寝室", "宿舍"]) else 0
 
 
 def parse_shelf_life(value: Any, today: date | None = None) -> tuple[int, int]:
-    text = text_or_empty(value)
     today = today or date.today()
-    if not text or text in {"无", "无明显保质期压力"}:
+    if value is None:
         return 0, 999
-    if any(k in text for k in ["需核对", "以包装", "注意", "有效期", "包装日期", "开封后", "建议", "个月内"]):
-        if "12个月" in text or "12 个月" in text:
-            return 1, 365
-        if "3个月" in text or "3 个月" in text:
-            return 1, 90
-        return 1, 90
+
+    import pandas as pd
+    if not isinstance(value, str) and not pd.isna(value):
+        try:
+            val_float = float(value)
+            if val_float == val_float:
+                return 1, int(val_float)
+        except (ValueError, TypeError):
+            pass
+        try:
+            from datetime import datetime
+            if isinstance(value, date) and not isinstance(value, datetime):
+                return 1, (value - today).days
+            else:
+                expiry = pd.to_datetime(value).date()
+                return 1, (expiry - today).days
+        except Exception:
+            pass
+
+    text = text_or_empty(value).strip()
+    if not text or text in {"无", "无明显保质期压力", "0", "0.0"}:
+        return 0, 999
+
+    # 优先进行具体日期格式提取，避免因中文字符如 "有效期" 提前拦截
     match = re.search(r"(\d{4})[-/年](\d{1,2})[-/月](\d{1,2})", text)
     if match:
         year, month, day = map(int, match.groups())
@@ -265,6 +388,21 @@ def parse_shelf_life(value: Any, today: date | None = None) -> tuple[int, int]:
             return 1, (expiry - today).days
         except ValueError:
             return 1, 90
+
+    try:
+        val_float = float(text)
+        if val_float == val_float:
+            return 1, int(val_float)
+    except ValueError:
+        pass
+
+    if any(k in text for k in ["需核对", "以包装", "注意", "有效期", "包装日期", "开封后", "建议", "个月内"]):
+        if "12个月" in text or "12 个月" in text:
+            return 1, 365
+        if "3个月" in text or "3 个月" in text:
+            return 1, 90
+        return 1, 90
+
     match = re.search(r"还有\s*(\d+)\s*个?月", text)
     if match:
         return 1, int(match.group(1)) * 30
@@ -296,9 +434,34 @@ def _safe_int(v: Any, default: int) -> int:
 def detect_damage(*texts: Any) -> int:
     joined = " ".join(text_or_empty(t) for t in texts)
     compact = re.sub(r"\s+", "", joined)
-    if any(pattern in compact for pattern in NEGATIVE_DAMAGE_PATTERNS):
-        return 0
-    return 1 if any(keyword in compact for keyword in DAMAGE_KEYWORDS) else 0
+    
+    # 每个损坏关键字都对应其专属否定短语，防止全局无条件匹配覆盖
+    damage_negations = {
+        "坏了": ["没有坏", "没坏", "没有坏了", "没坏了"],
+        "破损": ["没有破损", "无破损", "未破损", "没破损"],
+        "磨损": ["没有磨损", "无磨损", "未磨损", "没磨损"],
+        "接触不良": ["没有接触不良", "无接触不良", "未接触不良"],
+        "断裂": ["没有断裂", "无断裂", "未断裂"],
+        "失效": ["没有失效", "无失效", "未失效"],
+        "过期": ["没有过期", "未过期", "没过期"],
+        "漏液": ["没有漏液", "无漏液", "未漏液"],
+        "变干": ["没有变干", "无变干", "未变干"],
+        "发霉": ["没有发霉", "无发霉", "未发霉"],
+        "异味": ["没有异味", "无异味", "未异味"],
+        "不能用": ["没有不能用", "未不能用"],
+    }
+    
+    for keyword, negations in damage_negations.items():
+        if keyword in compact:
+            is_negated = any(neg in compact for neg in negations)
+            if not is_negated:
+                return 1
+                
+    for keyword in DAMAGE_KEYWORDS:
+        if keyword in compact and keyword not in damage_negations:
+            return 1
+            
+    return 0
 
 
 def estimate_remaining_days(used_days: float, remaining_pct: float, weekly_use_count: float) -> int:

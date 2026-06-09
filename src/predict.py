@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -224,7 +224,7 @@ def make_prediction_input(
 
     is_expiry_date_valid = False
     if expiry_date is not None and not pd.isna(expiry_date):
-        if isinstance(expiry_date, date):
+        if isinstance(expiry_date, date) and not isinstance(expiry_date, datetime):
             is_expiry_date_valid = True
         else:
             try:

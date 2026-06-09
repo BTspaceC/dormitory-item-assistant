@@ -363,30 +363,31 @@ def add_page_style() -> None:
         div[data-testid="stForm"] {
             padding: 1rem;
         }
-        div[data-baseweb="input"] > div,
-        div[data-baseweb="textarea"] textarea,
-        div[data-baseweb="select"] > div,
-        div[data-baseweb="base-input"] {
+        /* 针对表单、边栏及独立区块容器内的输入控件进行美化，避免污染数据表格编辑器 */
+        div[data-baseweb="input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) > div,
+        div[data-baseweb="textarea"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) textarea,
+        div[data-baseweb="select"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) > div,
+        div[data-baseweb="base-input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) {
             border-radius: 8px !important;
             border-color: rgba(79, 125, 85, 0.22) !important;
             background-color: var(--campus-input-bg) !important;
         }
-        div[data-baseweb="input"] input,
-        div[data-baseweb="textarea"] textarea,
-        div[data-baseweb="select"] span,
-        div[data-baseweb="base-input"] input {
+        div[data-baseweb="input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) input,
+        div[data-baseweb="textarea"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) textarea,
+        div[data-baseweb="select"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) span,
+        div[data-baseweb="base-input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) input {
             color: var(--campus-ink) !important;
             caret-color: var(--campus-green) !important;
         }
-        div[data-baseweb="input"] input::placeholder,
-        div[data-baseweb="textarea"] textarea::placeholder {
+        div[data-baseweb="input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) input::placeholder,
+        div[data-baseweb="textarea"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) textarea::placeholder {
             color: var(--campus-muted) !important;
             opacity: 0.72;
         }
-        html.dorm-theme-dark div[data-baseweb="input"] > div,
-        html.dorm-theme-dark div[data-baseweb="textarea"] textarea,
-        html.dorm-theme-dark div[data-baseweb="select"] > div,
-        html.dorm-theme-dark div[data-baseweb="base-input"] {
+        html.dorm-theme-dark div[data-baseweb="input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) > div,
+        html.dorm-theme-dark div[data-baseweb="textarea"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) textarea,
+        html.dorm-theme-dark div[data-baseweb="select"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) > div,
+        html.dorm-theme-dark div[data-baseweb="base-input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) {
             border-color: rgba(155, 211, 139, 0.20) !important;
         }
         html.dorm-theme-dark div[role="listbox"],

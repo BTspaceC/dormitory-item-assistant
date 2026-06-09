@@ -109,7 +109,7 @@ def handle_prediction(values: dict[str, Any], signature: tuple[int, int, int, st
     st.session_state["last_result"] = result
     st.session_state["last_input"] = input_data
 
-def save_user_feedback(input_data: Any, result: dict[str, Any]) -> None:
+def save_user_feedback(input_data: Any, result: dict[str, Any], suffix: str = "") -> None:
     record = {
         "item_name": input_data.item_name,
         "description": input_data.description,
@@ -122,11 +122,11 @@ def save_user_feedback(input_data: Any, result: dict[str, Any]) -> None:
         "days_to_expire": input_data.days_to_expire,
         "is_damaged": input_data.is_damaged,
         "predicted_category": result["predicted_category"],
-        "corrected_category": st.session_state.get("category_feedback", result["predicted_category"]),
+        "corrected_category": st.session_state.get(f"category_feedback{suffix}", result["predicted_category"]),
         "predicted_risk": result["predicted_risk"],
-        "corrected_risk": st.session_state.get("risk_feedback", result["predicted_risk"]),
-        "category_accepted": "认可" if st.session_state.get("category_accepted_radio") == "准了" else "不认可",
-        "risk_accepted": "认可" if st.session_state.get("risk_accepted_radio") == "准了" else "不认可",
+        "corrected_risk": st.session_state.get(f"risk_feedback{suffix}", result["predicted_risk"]),
+        "category_accepted": "认可" if st.session_state.get(f"category_accepted_radio{suffix}") == "准了" else "不认可",
+        "risk_accepted": "认可" if st.session_state.get(f"risk_accepted_radio{suffix}") == "准了" else "不认可",
     }
     append_feedback_record(record)
     st.success("反馈已保存！感谢您的协助。")
@@ -219,16 +219,17 @@ def render_result_and_feedback(signature: tuple[int, int, int, str]) -> None:
         ensure_feedback_schema()
         st.session_state["_feedback_schema_checked"] = True
 
+    item_suffix = f"_{result['item_name']}_{result['predicted_category']}_{result['predicted_risk']}".replace(" ", "_")
     with st.form("feedback_form"):
         col1, col2 = st.columns(2)
         with col1:
-            st.radio("类别判断准吗？", ["准了", "不准"], horizontal=True, key="category_accepted_radio")
-            st.selectbox("实际类别应该是", CATEGORIES, index=CATEGORIES.index(result["predicted_category"]) if result["predicted_category"] in CATEGORIES else 0, key="category_feedback")
+            st.radio("类别判断准吗？", ["准了", "不准"], horizontal=True, key=f"category_accepted_radio{item_suffix}")
+            st.selectbox("实际类别应该是", CATEGORIES, index=CATEGORIES.index(result["predicted_category"]) if result["predicted_category"] in CATEGORIES else 0, key=f"category_feedback{item_suffix}")
         with col2:
-            st.radio("状态评估准吗？", ["准了", "不准"], horizontal=True, key="risk_accepted_radio")
-            st.selectbox("实际状态应该是", RISK_LABELS, index=RISK_LABELS.index(result["predicted_risk"]) if result["predicted_risk"] in RISK_LABELS else 0, key="risk_feedback")
+            st.radio("状态评估准吗？", ["准了", "不准"], horizontal=True, key=f"risk_accepted_radio{item_suffix}")
+            st.selectbox("实际状态应该是", RISK_LABELS, index=RISK_LABELS.index(result["predicted_risk"]) if result["predicted_risk"] in RISK_LABELS else 0, key=f"risk_feedback{item_suffix}")
         if st.form_submit_button("提交反馈", width='stretch'):
-            save_user_feedback(last_input, result)
+            save_user_feedback(last_input, result, suffix=item_suffix)
 
     st.divider()
     st.subheader("试用数据导出")

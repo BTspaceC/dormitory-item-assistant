@@ -75,7 +75,8 @@ FIELDNAMES = [
 ]
 
 DEFAULT_HOLDOUT_KEYWORDS = [
-    "抽纸/纸巾",
+    "抽纸",
+    "纸巾",
     "垃圾袋",
     "洗发水",
     "创可贴",
