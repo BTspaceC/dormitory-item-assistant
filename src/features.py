@@ -271,6 +271,28 @@ def parse_shelf_life(value: Any, today: date | None = None) -> tuple[int, int]:
     return 1, 90
 
 
+def _safe_float(v: Any, default: float) -> float:
+    if v is None:
+        return default
+    try:
+        import pandas as pd
+        if pd.isna(v):
+            return default
+    except ImportError:
+        pass
+    try:
+        val = float(v)
+        if val != val:
+            return default
+        return val
+    except (ValueError, TypeError):
+        return default
+
+
+def _safe_int(v: Any, default: int) -> int:
+    return int(_safe_float(v, float(default)))
+
+
 def detect_damage(*texts: Any) -> int:
     joined = " ".join(text_or_empty(t) for t in texts)
     compact = re.sub(r"\s+", "", joined)
@@ -280,7 +302,11 @@ def detect_damage(*texts: Any) -> int:
 
 
 def estimate_remaining_days(used_days: float, remaining_pct: float, weekly_use_count: float) -> int:
-    remaining_pct = _bound_percent(float(remaining_pct))
+    used_days = _safe_float(used_days, 0.0)
+    remaining_pct = _safe_float(remaining_pct, 50.0)
+    weekly_use_count = _safe_float(weekly_use_count, 1.0)
+
+    remaining_pct = _bound_percent(remaining_pct)
     if remaining_pct <= 0:
         return 0
     if used_days > 0 and remaining_pct < 100:
@@ -293,11 +319,11 @@ def estimate_remaining_days(used_days: float, remaining_pct: float, weekly_use_c
 
 
 def risk_rule_baseline(row: dict[str, Any]) -> str:
-    remaining = float(row.get("remaining_pct", 50) or 50)
-    weekly = float(row.get("weekly_use_count", 1) or 1)
-    days_to_expire = int(float(row.get("days_to_expire", 999) or 999))
-    has_shelf_life = int(row.get("has_shelf_life", 0) or 0)
-    damaged = int(row.get("is_damaged", 0) or 0)
+    remaining = _safe_float(row.get("remaining_pct"), 50.0)
+    weekly = _safe_float(row.get("weekly_use_count"), 1.0)
+    days_to_expire = _safe_int(row.get("days_to_expire"), 999)
+    has_shelf_life = _safe_int(row.get("has_shelf_life"), 0)
+    damaged = _safe_int(row.get("is_damaged"), 0)
 
     if damaged or (has_shelf_life and days_to_expire <= 30):
         return "过期/损坏风险"
@@ -315,12 +341,12 @@ def _feature_value(input_data: Any, key: str, default: Any) -> Any:
 
 
 def explain_risk_factors(input_data: Any, predicted_risk: str) -> list[str]:
-    remaining = float(_feature_value(input_data, "remaining_pct", 50) or 50)
-    weekly = float(_feature_value(input_data, "weekly_use_count", 1) or 1)
-    has_shelf_life = int(_feature_value(input_data, "has_shelf_life", 0) or 0)
-    days_to_expire = int(float(_feature_value(input_data, "days_to_expire", 999) or 999))
-    damaged = int(_feature_value(input_data, "is_damaged", 0) or 0)
-    used_days = int(float(_feature_value(input_data, "used_days", 0) or 0))
+    remaining = _safe_float(_feature_value(input_data, "remaining_pct", 50.0), 50.0)
+    weekly = _safe_float(_feature_value(input_data, "weekly_use_count", 1.0), 1.0)
+    has_shelf_life = _safe_int(_feature_value(input_data, "has_shelf_life", 0), 0)
+    days_to_expire = _safe_int(_feature_value(input_data, "days_to_expire", 999), 999)
+    damaged = _safe_int(_feature_value(input_data, "is_damaged", 0), 0)
+    used_days = _safe_float(_feature_value(input_data, "used_days", 0.0), 0.0)
     remaining_days = estimate_remaining_days(used_days, remaining, weekly)
 
     if predicted_risk == "正常":
