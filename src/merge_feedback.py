@@ -154,7 +154,10 @@ def default_feature_row(category: str) -> dict[str, object]:
 def clean_text(value: object) -> str:
     if value is None or pd.isna(value):
         return ""
-    return str(value).strip()
+    s = str(value).strip()
+    if s.lower() in ("nan", "none", "<na>"):
+        return ""
+    return s
 
 
 def ensure_feedback_schema(feedback_path: Path = FEEDBACK_PATH) -> None:
