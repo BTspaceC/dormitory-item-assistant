@@ -1,0 +1,99 @@
+Created At: 2026-06-09T11:31:10Z
+Completed At: 2026-06-09T11:31:10Z
+File Path: `file:///D:/OneDrive/Documents/ML%E5%B0%8F%E7%BB%84%E4%BD%9C%E4%B8%9A/app.py`
+Total Lines: 1897
+Total Bytes: 78014
+Showing lines 158 to 957
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+158:         "weekly_use_count": 4.0,
+159:         "user_count": 1,
+160:         "is_shared": False,
+161:         "has_shelf_life": True,
+162:         "expiry_days": 120,
+163:         "is_damaged": False,
+164:     },
+165:     "笔芯：学习用品，剩余 2 支": {
+166:         "item_name": "笔芯",
+167:         "description": "上课和做题经常用，剩余两支。",
+168:         "used_days": 30,
+169:         "remaining_pct": 25,
+170:         "weekly_use_count": 5.0,
+171:         "user_count": 1,
+172:         "is_shared": False,
+173:         "has_shelf_life": False,
+174:         "expiry_days": 999,
+175:         "is_damaged": False,
+176:     },
+177:     "充电线：外皮破损": {
+178:         "item_name": "充电线",
+179:         "description": "每天使用，外皮已经破损，暂时没有备用线。",
+180:         "used_days": 180,
+181:         "remaining_pct": 45,
+182:         "weekly_use_count": 7.0,
+183:         "user_count": 1,
+184:         "is_shared": False,
+185:         "has_shelf_life": False,
+186:         "expiry_days": 999,
+187:         "is_damaged": True,
+188:     },
+189:     "异常输入：剩余量 130%": {
+190:         "item_name": "牙膏",
+191:         "description": "测试异常输入。",
+192:         "used_days": 20,
+193:         "remaining_pct": 130,
+194:         "weekly_use_count": 14.0,
+195:         "user_count": 1,
+196:         "is_shared": False,
+197:         "has_shelf_life": False,
+198:         "expiry_days": 999,
+199:         "is_damaged": False,
+200:     },
+201: }
+202: 
+203: BATCH_TEMPLATE = [
+204:     {
+205:      
+<truncated 32139 bytes>
+6:             if category_f1 is not None:
+917:                 st.metric("类别模型 Macro F1", f"{category_f1:.3f}")
+918:             if risk_f1 is not None and rule_f1 is not None:
+919:                 st.metric("端到端风险 Macro F1", f"{risk_f1:.3f}", delta=f"规则基线 {rule_f1:.3f}")
+920: 
+921:             st.markdown(
+922:                 "<p class='small-note'>指标用于展示训练与评估流程，不代表大规模场景下的强泛化能力。</p>",
+923:                 unsafe_allow_html=True,
+924:             )
+925: 
+926:         st.divider()
+927:         st.subheader("交付材料")
+928:         if st.button("导出用户试用记录", use_container_width=True):
+929:             csv_path, md_path, row_count = export_trial_records()
+930:             st.success(f"已导出 {row_count} 条记录。")
+931:             st.caption(f"CSV：{csv_path}")
+932:             st.caption(f"Markdown：{md_path}")
+933: 
+934: 
+935: def render_single_mode(signature: tuple[int, int, int, str]) -> None:
+936:     render_section_header(
+937:         "单件预测",
+938:         "可以先载入演示案例，也可以直接填写用户自己的宿舍物品。",
+939:         "工具入口",
+940:     )
+941:     render_flow_steps(
+942:         [
+943:             ("选择案例", "快速填入一组典型物品"),
+944:             ("填写信息", "补充剩余量、频率和状态"),
+945:             ("查看结果", "确认风险并保存反馈"),
+946:         ]
+947:     )
+948:     render_example_loader()
+949:     form_values = render_prediction_form()
+950: 
+951:     if form_values["submitted"]:
+952:         handle_prediction(form_values, signature)
+953: 
+954:     st.divider()
+955:     render_section_header(
+956:         "预测结果",
+957:         "结果区会展示风险等级、判断依据、概率图表和反馈入口。",
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
