@@ -363,31 +363,47 @@ def add_page_style() -> None:
         div[data-testid="stForm"] {
             padding: 1rem;
         }
-        /* 针对表单、边栏及独立区块容器内的输入控件进行美化，避免污染数据表格编辑器 */
-        div[data-baseweb="input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) > div,
-        div[data-baseweb="textarea"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) textarea,
-        div[data-baseweb="select"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) > div,
-        div[data-baseweb="base-input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) {
+        /* 针对表单、边栏等独立区块容器内的输入控件进行美化，精准靶向 Streamlit 核心输入组件，避免污染数据表格及浮动 Portal */
+        div[data-testid="stTextInput"] div[data-baseweb="input"] > div,
+        div[data-testid="stNumberInput"] div[data-baseweb="input"] > div,
+        div[data-testid="stDateInput"] div[data-baseweb="input"] > div,
+        div[data-testid="stTextArea"] div[data-baseweb="textarea"] textarea,
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+        div[data-testid="stMultiSelect"] div[data-baseweb="select"] > div,
+        div[data-testid="stTextInput"] div[data-baseweb="base-input"],
+        div[data-testid="stNumberInput"] div[data-baseweb="base-input"],
+        div[data-testid="stDateInput"] div[data-baseweb="base-input"] {
             border-radius: 8px !important;
             border-color: rgba(79, 125, 85, 0.22) !important;
             background-color: var(--campus-input-bg) !important;
         }
-        div[data-baseweb="input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) input,
-        div[data-baseweb="textarea"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) textarea,
-        div[data-baseweb="select"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) span,
-        div[data-baseweb="base-input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) input {
+        div[data-testid="stTextInput"] div[data-baseweb="input"] input,
+        div[data-testid="stNumberInput"] div[data-baseweb="input"] input,
+        div[data-testid="stDateInput"] div[data-baseweb="input"] input,
+        div[data-testid="stTextArea"] div[data-baseweb="textarea"] textarea,
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] span,
+        div[data-testid="stMultiSelect"] div[data-baseweb="select"] span,
+        div[data-testid="stTextInput"] div[data-baseweb="base-input"] input,
+        div[data-testid="stNumberInput"] div[data-baseweb="base-input"] input,
+        div[data-testid="stDateInput"] div[data-baseweb="base-input"] input {
             color: var(--campus-ink) !important;
             caret-color: var(--campus-green) !important;
         }
-        div[data-baseweb="input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) input::placeholder,
-        div[data-baseweb="textarea"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) textarea::placeholder {
+        div[data-testid="stTextInput"] div[data-baseweb="input"] input::placeholder,
+        div[data-testid="stNumberInput"] div[data-baseweb="input"] input::placeholder,
+        div[data-testid="stTextArea"] div[data-baseweb="textarea"] textarea::placeholder {
             color: var(--campus-muted) !important;
             opacity: 0.72;
         }
-        html.dorm-theme-dark div[data-baseweb="input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) > div,
-        html.dorm-theme-dark div[data-baseweb="textarea"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) textarea,
-        html.dorm-theme-dark div[data-baseweb="select"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) > div,
-        html.dorm-theme-dark div[data-baseweb="base-input"]:not([data-testid*="DataEditor"] *):not([data-testid*="DataFrame"] *) {
+        html.dorm-theme-dark div[data-testid="stTextInput"] div[data-baseweb="input"] > div,
+        html.dorm-theme-dark div[data-testid="stNumberInput"] div[data-baseweb="input"] > div,
+        html.dorm-theme-dark div[data-testid="stDateInput"] div[data-baseweb="input"] > div,
+        html.dorm-theme-dark div[data-testid="stTextArea"] div[data-baseweb="textarea"] textarea,
+        html.dorm-theme-dark div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+        html.dorm-theme-dark div[data-testid="stMultiSelect"] div[data-baseweb="select"] > div,
+        html.dorm-theme-dark div[data-testid="stTextInput"] div[data-baseweb="base-input"],
+        html.dorm-theme-dark div[data-testid="stNumberInput"] div[data-baseweb="base-input"],
+        html.dorm-theme-dark div[data-testid="stDateInput"] div[data-baseweb="base-input"] {
             border-color: rgba(155, 211, 139, 0.20) !important;
         }
         html.dorm-theme-dark div[role="listbox"],
@@ -451,7 +467,8 @@ def add_page_style() -> None:
             .result-card-grid,
             .batch-summary-grid { grid-template-columns: 1fr; }
         }
-        div[data-baseweb="select"] > div {
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+        div[data-testid="stMultiSelect"] div[data-baseweb="select"] > div {
             cursor: default !important;
         }
         /* Baseline: strip outline/ring from data-editor buttons;

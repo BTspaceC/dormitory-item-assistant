@@ -55,6 +55,29 @@ def normalize_batch_columns(df: pd.DataFrame) -> pd.DataFrame:
         rename_map["每周使用次数"] = "周频次"
     if rename_map:
         normalized = normalized.rename(columns=rename_map)
+
+    # Cast columns to pandas nullable dtypes to prevent literal 'None' values and ensure checkboxes/inputs render properly
+    type_map = {
+        "物品名称": "string",
+        "用户描述": "string",
+        "使用天数": "Int64",
+        "剩余量(%)": "Int64",
+        "周频次": "Float64",
+        "使用人数": "Int64",
+        "是否共用": "boolean",
+        BATCH_HAS_SHELF_LIFE_COLUMN: "boolean",
+        BATCH_EXPIRE_DAYS_COLUMN: "Int64",
+        "是否破损": "boolean"
+    }
+    for col, dtype in type_map.items():
+        if col in normalized.columns:
+            try:
+                s = normalized[col].copy()
+                if s.dtype == object or s.dtype == 'string':
+                    s = s.map(lambda val: pd.NA if (pd.isna(val) or str(val).strip().lower() in ("nan", "none", "null", "<na>", "")) else val)
+                normalized[col] = s.astype(dtype)
+            except Exception:
+                pass
     return normalized
 
 def safe_str(val, default="") -> str:

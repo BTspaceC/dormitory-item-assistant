@@ -56,6 +56,19 @@ class PredictionInput:
 
 
 def load_models(model_dir: Path = MODELS_DIR) -> tuple[dict[str, Any], dict[str, Any]]:
+    import sys
+    # Add a defensive module mapping so that models pickled under either namespace load correctly
+    try:
+        import src.features as src_features
+        sys.modules["features"] = src_features
+    except ImportError:
+        pass
+    try:
+        import features as raw_features
+        sys.modules["src.features"] = raw_features
+    except ImportError:
+        pass
+
     category_path = model_dir / "category_model.joblib"
     risk_path = model_dir / "risk_model.joblib"
     if not category_path.exists() or not risk_path.exists():

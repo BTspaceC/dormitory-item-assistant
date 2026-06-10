@@ -1,7 +1,7 @@
 {
-  "trained_at": "2026-06-09T23:07:55",
-  "train_rows": 100,
-  "real_holdout_rows": 9,
+  "trained_at": "2026-06-10T10:24:09",
+  "train_rows": 99,
+  "real_holdout_rows": 10,
   "category_labels": [
     "清洁日用",
     "洗漱用品",
@@ -30,11 +30,11 @@
   "metrics": {
     "category_accuracy": 1.0,
     "category_macro_f1": 0.8333333333333334,
-    "risk_oracle_accuracy": 0.6666666666666666,
-    "risk_oracle_macro_f1": 0.6761904761904762,
-    "risk_e2e_accuracy": 0.6666666666666666,
-    "risk_e2e_macro_f1": 0.6761904761904762,
-    "rule_baseline_accuracy": 0.5555555555555556,
+    "risk_oracle_accuracy": 0.6,
+    "risk_oracle_macro_f1": 0.5166666666666666,
+    "risk_e2e_accuracy": 0.6,
+    "risk_e2e_macro_f1": 0.5166666666666666,
+    "rule_baseline_accuracy": 0.6,
     "rule_baseline_macro_f1": 0.5666666666666667
   },
   "environment": {

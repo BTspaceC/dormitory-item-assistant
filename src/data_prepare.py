@@ -307,9 +307,15 @@ def load_holdout_terms() -> tuple[list[str], list[str]]:
             if not term:
                 continue
             if term_type == "holdout":
-                holdout_terms.append(term)
+                if "/" in term:
+                    holdout_terms.extend(term.split("/"))
+                else:
+                    holdout_terms.append(term)
             elif term_type == "similar":
-                similar_terms.append(term)
+                if "/" in term:
+                    similar_terms.extend(term.split("/"))
+                else:
+                    similar_terms.append(term)
 
     return holdout_terms or DEFAULT_HOLDOUT_KEYWORDS, similar_terms or DEFAULT_HOLDOUT_SIMILAR_KEYWORDS
 
