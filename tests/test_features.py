@@ -25,6 +25,10 @@ def test_normalize_category_falls_back_from_text() -> None:
     assert normalize_category("", "蛋白粉", "训练后使用的补剂") == "健康与补剂用品"
     assert normalize_category("其他用品", "Type-C 数据线", "手机充电备用") == "电子配件"
     assert normalize_category("", "笔芯", "上课记笔记使用") == "学习用品"
+    assert normalize_category("其他用品", "抽纸", "") == "清洁日用"
+    assert normalize_category("其他用品", "湿纸巾", "") == "清洁日用"
+    assert normalize_category("其他用品", "卷筒纸", "") == "清洁日用"
+    assert normalize_category("其他用品", "草稿纸", "") == "学习用品"
 
 
 def test_estimate_remaining_days_handles_boundaries() -> None:
