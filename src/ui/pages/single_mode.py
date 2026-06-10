@@ -219,7 +219,7 @@ def render_result_and_feedback(signature: tuple[int, int, int, str]) -> None:
         ensure_feedback_schema()
         st.session_state["_feedback_schema_checked"] = True
 
-    item_suffix = f"_{result['item_name']}_{result['predicted_category']}_{result['predicted_risk']}".replace(" ", "_")
+    item_suffix = f"_{last_input.item_name}_{result['predicted_category']}_{result['predicted_risk']}".replace(" ", "_")
     with st.form("feedback_form"):
         col1, col2 = st.columns(2)
         with col1:
