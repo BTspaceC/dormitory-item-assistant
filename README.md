@@ -7,6 +7,8 @@ date: 2026-06-09
 
 # 宿舍生活用品智能小助手
 
+[在线体验](https://dormitory-item-assistant.streamlit.app/) · [项目仓库](https://github.com/BTspaceC/dormitory-item-assistant)
+
 本系统是针对宿舍生活场景设计的物品管理与状态预测系统。基于真实用户访谈样本和人工复核扩展数据，实现物品自动分类与状态风险评估，辅助用户及时掌握补货、过期或损坏状态。
 
 系统采用 Streamlit 搭建交互界面，核心业务流如下：

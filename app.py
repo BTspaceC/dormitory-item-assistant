@@ -4,7 +4,7 @@ from pathlib import Path
 
 # Important: set page config must be first
 st.set_page_config(
-    page_title="宿舍生活用品小助手",
+    page_title="宿舍生活用品智能小助手",
     page_icon="🎒",
     layout="wide",
     initial_sidebar_state="expanded"
