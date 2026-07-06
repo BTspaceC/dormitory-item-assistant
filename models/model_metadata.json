@@ -1,0 +1,47 @@
+{
+  "trained_at": "2026-06-10T12:38:36",
+  "train_rows": 109,
+  "real_holdout_rows": 10,
+  "category_labels": [
+    "清洁日用",
+    "洗漱用品",
+    "健康与补剂用品",
+    "学习用品",
+    "电子配件",
+    "文体娱乐",
+    "其他用品"
+  ],
+  "risk_labels": [
+    "正常",
+    "需要关注",
+    "建议补货",
+    "过期/损坏风险"
+  ],
+  "risk_features": [
+    "category",
+    "used_days",
+    "remaining_pct",
+    "weekly_use_count",
+    "user_count",
+    "is_shared",
+    "has_shelf_life",
+    "days_to_expire",
+    "is_damaged"
+  ],
+  "metrics": {
+    "category_accuracy": 1.0,
+    "category_macro_f1": 0.7142857142857143,
+    "risk_oracle_accuracy": 0.6,
+    "risk_oracle_macro_f1": 0.5166666666666666,
+    "risk_e2e_accuracy": 0.6,
+    "risk_e2e_macro_f1": 0.5166666666666666,
+    "rule_baseline_accuracy": 0.6,
+    "rule_baseline_macro_f1": 0.5666666666666667
+  },
+  "environment": {
+    "python": "3.13.0",
+    "pandas": "3.0.1",
+    "scikit_learn": "1.9.0",
+    "joblib": "1.5.3"
+  }
+}
