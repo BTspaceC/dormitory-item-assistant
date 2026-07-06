@@ -148,6 +148,7 @@ def predict_batch(df: pd.DataFrame, bundles=None) -> list[dict]:
             "处理状态": "已预测",
             "预测类别": res["predicted_category"],
             "状态风险": res["predicted_risk"],
+            "决策来源": res.get("risk_decision_source", "风险模型"),
             "把握程度": f"类别 {res['category_confidence']:.0%} | 风险 {res['risk_confidence']:.0%}",
             "原因摘要": res["risk_reasons"][0] if res["risk_reasons"] else "",
             "建议摘要": res["advice"],

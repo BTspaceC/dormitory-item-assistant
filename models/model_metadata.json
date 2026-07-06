@@ -1,6 +1,9 @@
 {
-  "trained_at": "2026-06-10T12:38:36",
+  "trained_at": "2026-07-06T20:39:12",
   "train_rows": 109,
+  "category_train_rows": 42109,
+  "external_category_train_rows": 42000,
+  "external_category_eval_rows": 7000,
   "real_holdout_rows": 10,
   "category_labels": [
     "清洁日用",
@@ -28,13 +31,28 @@
     "days_to_expire",
     "is_damaged"
   ],
+  "external_data": {
+    "name": "JD dataset",
+    "url": "https://gitee.com/KunLiu_kk/jd-dataset",
+    "commit": "2931aecb22e9decfe7cea85f292690eebd3adcb0",
+    "license": "MulanPSL-2.0",
+    "usage": "category classification only; never used as risk labels"
+  },
   "metrics": {
+    "baseline_category_accuracy": 1.0,
+    "baseline_category_macro_f1": 0.7142857142857143,
     "category_accuracy": 1.0,
     "category_macro_f1": 0.7142857142857143,
+    "external_baseline_category_accuracy": 0.22557142857142856,
+    "external_baseline_category_macro_f1": 0.17262626534698974,
+    "external_category_accuracy": 0.9791428571428571,
+    "external_category_macro_f1": 0.9791267193305667,
     "risk_oracle_accuracy": 0.6,
     "risk_oracle_macro_f1": 0.5166666666666666,
-    "risk_e2e_accuracy": 0.6,
-    "risk_e2e_macro_f1": 0.5166666666666666,
+    "risk_model_accuracy": 0.6,
+    "risk_model_macro_f1": 0.5166666666666666,
+    "risk_hybrid_accuracy": 0.9,
+    "risk_hybrid_macro_f1": 0.8888888888888888,
     "rule_baseline_accuracy": 0.6,
     "rule_baseline_macro_f1": 0.5666666666666667
   },

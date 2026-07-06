@@ -139,8 +139,9 @@ def render_result_cards(result: dict[str, Any]) -> None:
     )
     cards = [
         ("预测类别", result["predicted_category"], "模型 1 输出", ""),
-        ("风险使用类别", result["risk_category"], "模型 2 实际输入", ""),
+        ("风险使用类别", result["risk_category"], "风险评估实际输入", ""),
         ("状态风险", result["predicted_risk"], "当前优先处理等级", RISK_CARD_CLASS.get(result["predicted_risk"], "")),
+        ("决策来源", result.get("risk_decision_source", "风险模型"), "模型与确定性规则协同", ""),
         ("类别把握", format_percent(result.get("category_confidence", 0.0)), "建议结合实际确认", ""),
         ("风险把握", format_percent(result.get("risk_confidence", 0.0)), "状态判断置信参考", ""),
         ("预计剩余可用", remaining_display, "过期/损坏风险时不估算天数", ""),

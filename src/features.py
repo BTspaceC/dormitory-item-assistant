@@ -85,6 +85,17 @@ NEGATIVE_DAMAGE_PATTERNS = [
     "无漏液",
 ]
 
+CATEGORY_OVERRIDE_RULES = [
+    ("清洁日用", ["纸巾", "抽纸", "卷纸", "卫生纸", "湿巾", "垃圾袋", "洗衣液", "洗洁精", "清洁剂", "消毒液"]),
+    ("洗漱用品", ["牙膏", "牙刷", "洗发水", "洗发露", "沐浴露", "洗面奶", "毛巾", "护手霜"]),
+    ("健康与补剂用品", ["感冒药", "药盒", "药片", "药膏", "创可贴", "口罩", "蛋白粉", "维生素", "补剂"]),
+    ("学习用品", ["笔芯", "中性笔", "圆珠笔", "草稿纸", "打印纸", "文件夹", "便利贴"]),
+    ("电子配件", ["充电线", "数据线", "充电器", "电池", "插排", "耳机", "转换头", "转接头"]),
+    ("文体娱乐", ["篮球", "足球", "羽毛球", "乒乓球", "哑铃", "拉力器", "跳绳", "瑜伽", "棋牌", "小说", "杂志"]),
+]
+
+UNKNOWN_ITEM_MARKERS = ["完全陌生", "神秘东西", "不匹配任何", "无法识别", "不知道是什么", "未知物品"]
+
 
 def text_or_empty(value: Any) -> str:
     if value is None:
@@ -104,6 +115,17 @@ def text_or_empty(value: Any) -> str:
     if s.lower() in ("nan", "none", "<na>"):
         return ""
     return s
+
+
+def category_rule_override(item_name: str = "", description: str = "") -> str | None:
+    """Return a domain label only for high-precision dormitory keywords."""
+    text = f"{text_or_empty(item_name)} {text_or_empty(description)}".casefold()
+    if any(marker in text for marker in UNKNOWN_ITEM_MARKERS):
+        return "其他用品"
+    for category, keywords in CATEGORY_OVERRIDE_RULES:
+        if any(keyword in text for keyword in keywords):
+            return category
+    return None
 
 
 def normalize_category(raw_category: str, item_name: str = "", description: str = "") -> str:
@@ -145,6 +167,37 @@ def normalize_category(raw_category: str, item_name: str = "", description: str 
 def map_risk_label(user_judgment: str) -> str:
     value = text_or_empty(user_judgment)
     return RISK_LABEL_MAP.get(value, value if value in RISK_LABELS else "需要关注")
+
+
+def hybrid_risk_decision(row: dict[str, Any], model_prediction: str) -> tuple[str, str]:
+    """Combine learned patterns with deterministic safety and replenishment gates.
+
+    The risk model is useful for fuzzy boundaries. Near-expiry and very low
+    inventory are explicit business conditions, while a generic damage flag
+    still needs severity calibration when no expiry concept applies.
+    """
+    has_shelf_life = int(row.get("has_shelf_life", 0) or 0)
+    raw_days_to_expire = row.get("days_to_expire", 999)
+    days_to_expire = 999 if raw_days_to_expire is None else int(raw_days_to_expire)
+    is_damaged = int(row.get("is_damaged", 0) or 0)
+
+    if has_shelf_life and days_to_expire <= 30:
+        return "过期/损坏风险", "安全硬规则"
+
+    rule_prediction = risk_rule_baseline(row)
+    if rule_prediction == "建议补货":
+        return "建议补货", "补货阈值规则"
+
+    if model_prediction == "过期/损坏风险" and has_shelf_life and days_to_expire <= 90:
+        return "过期/损坏风险", "风险模型"
+
+    if model_prediction == "过期/损坏风险" and is_damaged:
+        return "需要关注", "损坏等级校准"
+
+    if model_prediction == "过期/损坏风险":
+        return "需要关注", "安全阈值校准"
+
+    return model_prediction, "风险模型"
 
 
 def parse_used_days(value: Any) -> int:
@@ -707,11 +760,10 @@ BATCH_TEMPLATE = [
 ]
 
 DOCS_OPTIONS = {
+    "项目技术介绍": "docs/project_introduction.md",
     "AI辅助使用记录": "docs/ai_usage_record.md",
-    "用户交付记录": "reports/user_delivery_record.md",
     "测试用例与分析": "reports/test_cases.md",
     "模型训练与评估": "reports/model_eval.md",
-    "试用数据记录": "reports/user_trial_export.md"
 }
 
 PROJECT_IMAGE_ITEMS = [

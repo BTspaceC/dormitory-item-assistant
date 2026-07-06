@@ -46,6 +46,7 @@ def test_predict_single_item_fallback() -> None:
     res = predict(inp, model_bundles=None)
     assert res["predicted_category"] == "健康与补剂用品"
     assert res["predicted_risk"] == "过期/损坏风险"
+    assert res["risk_decision_source"] == "安全硬规则"
 
 def test_predict_batch_standard_and_none_values() -> None:
     df = pd.DataFrame([

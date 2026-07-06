@@ -7,4 +7,6 @@ venv/
 .pytest_cache/
 *.log
 data/feedback/
+data/external/raw/
+*.rar
 reports/user_trial_export.*

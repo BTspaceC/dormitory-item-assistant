@@ -14,9 +14,11 @@ try:
         RISK_FEATURES,
         RISK_LABELS,
         advice_for,
+        category_rule_override,
         detect_damage,
         estimate_remaining_days,
         explain_risk_factors,
+        hybrid_risk_decision,
         normalize_category,
         parse_shelf_life,
         risk_rule_baseline,
@@ -27,9 +29,11 @@ except ImportError:  # pragma: no cover - supports direct script execution
         RISK_FEATURES,
         RISK_LABELS,
         advice_for,
+        category_rule_override,
         detect_damage,
         estimate_remaining_days,
         explain_risk_factors,
+        hybrid_risk_decision,
         normalize_category,
         parse_shelf_life,
         risk_rule_baseline,
@@ -107,10 +111,13 @@ def predict(
     
     if risk_model is not None:
         risk_df = pd.DataFrame([row], columns=RISK_FEATURES)
-        predicted_risk = risk_model.predict(risk_df)[0]
+        model_risk = risk_model.predict(risk_df)[0]
         risk_probs = get_probabilities(risk_model, risk_df, RISK_LABELS)
+        predicted_risk, decision_source = hybrid_risk_decision(row, model_risk)
+        risk_probs = calibrate_risk_probabilities(risk_probs, predicted_risk, decision_source)
     else:
         predicted_risk = risk_rule_baseline(row)
+        decision_source = "规则降级模式"
         risk_probs = {}
         
     category_confidence = max(category_probs.values()) if category_probs else 0.0
@@ -125,6 +132,7 @@ def predict(
         "predicted_category": predicted_category,
         "risk_category": risk_category,
         "predicted_risk": predicted_risk,
+        "risk_decision_source": decision_source,
         "estimated_remaining_days": remaining_days,
         "advice": advice_for(risk_category, predicted_risk, remaining_days),
         "risk_reasons": explain_risk_factors(row, predicted_risk),
@@ -156,11 +164,13 @@ def predict_category(
         predicted_category = ""
 
     fallback_category = normalize_category("", item_name, description)
-    if (confidence < 0.40 and fallback_category != "其他用品") or (confidence < 0.30):
-        predicted_category = fallback_category
+    rule_override = category_rule_override(item_name, description)
+    if rule_override is not None or (confidence < 0.40 and fallback_category != "其他用品") or confidence < 0.30:
+        predicted_category = rule_override or fallback_category
         # Redistribute probability: assign fallback category the max confidence,
         # and scale down other categories proportionally.
-        fallback_prob = max(category_probs.get(predicted_category, 0.0), confidence + 0.01)
+        minimum_rule_confidence = 0.90 if rule_override is not None else confidence + 0.01
+        fallback_prob = max(category_probs.get(predicted_category, 0.0), minimum_rule_confidence)
         other_total = sum(v for k, v in category_probs.items() if k != predicted_category)
         scale = (1.0 - fallback_prob) / other_total if other_total > 0 else 0.0
         category_probs = {
@@ -181,6 +191,37 @@ def get_probabilities(model: Any, values: Any, label_order: list[str]) -> dict[s
     return {
         label: round(float(probabilities[classes.index(label)]), 4) if label in classes else 0.0
         for label in label_order
+    }
+
+
+def calibrate_risk_probabilities(
+    raw_probabilities: dict[str, float],
+    chosen_label: str,
+    decision_source: str,
+) -> dict[str, float]:
+    """Expose confidence for the final decision instead of stale model output."""
+    if decision_source == "风险模型" or not raw_probabilities:
+        return raw_probabilities
+
+    target_confidence = {
+        "安全硬规则": 0.98,
+        "补货阈值规则": 0.90,
+        "损坏等级校准": 0.75,
+        "安全阈值校准": 0.70,
+    }.get(decision_source, 0.70)
+    other_total = sum(value for label, value in raw_probabilities.items() if label != chosen_label)
+    if other_total <= 0:
+        other_labels = [label for label in RISK_LABELS if label != chosen_label]
+        remainder = (1.0 - target_confidence) / len(other_labels)
+        return {
+            label: target_confidence if label == chosen_label else remainder
+            for label in RISK_LABELS
+        }
+
+    scale = (1.0 - target_confidence) / other_total
+    return {
+        label: round(target_confidence if label == chosen_label else value * scale, 4)
+        for label, value in raw_probabilities.items()
     }
 
 

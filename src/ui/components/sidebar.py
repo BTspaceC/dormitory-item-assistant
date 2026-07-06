@@ -10,7 +10,12 @@ def render_sidebar(metadata: dict[str, Any]) -> None:
             st.warning("未找到模型元数据，请先训练模型。")
         else:
             st.write(f"训练时间：{metadata.get('trained_at', '未知')}")
-            st.metric("训练样本数", metadata.get("train_rows", "未知"), help="用于模型训练的总样本量")
+            st.metric(
+                "类别训练样本数",
+                metadata.get("category_train_rows", metadata.get("train_rows", "未知")),
+                help="本地复核样本与外部商品类别元数据；外部数据不参与风险训练",
+            )
+            st.metric("风险训练样本数", metadata.get("train_rows", "未知"), help="仅使用本地复核样本")
             st.metric("真实留出样本数", metadata.get("real_holdout_rows", "未知"), help="未参与训练、用于评估的真实样本")
 
             
