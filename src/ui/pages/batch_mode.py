@@ -4,7 +4,7 @@ import html
 from typing import Any
 
 from src.features import BATCH_HAS_SHELF_LIFE_COLUMN, BATCH_EXPIRE_DAYS_COLUMN, MAX_BATCH_UPLOAD_ROWS
-from src.predict import predict, make_prediction_input, load_models
+from src.predict import predict, make_prediction_input
 from src.ui.utils import render_html, clean_html, render_section_header
 from src.ui.pages.single_mode import render_flow_steps
 
@@ -158,12 +158,11 @@ def predict_batch(df: pd.DataFrame, bundles=None) -> list[dict]:
         })
     return results
 
-def handle_batch_prediction(batch_df: pd.DataFrame, signature: tuple[int, int, int, str]) -> dict[str, Any]:
-    try:
-        model_bundles = load_models()
-    except FileNotFoundError:
-        model_bundles = None
-
+def handle_batch_prediction(
+    batch_df: pd.DataFrame,
+    signature: tuple[int, int, int, str],
+    model_bundles: tuple[dict[str, Any], dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     results = predict_batch(batch_df, bundles=model_bundles)
     result_df = pd.DataFrame(results)
     skipped_blank_count = len(batch_df) - len(result_df)
@@ -211,7 +210,10 @@ def render_batch_results(batch_result: Any) -> None:
     render_batch_summary_cards(result_df)
     st.dataframe(result_df[display_columns], hide_index=True, width='stretch')
 
-def render_batch_mode(signature: tuple[int, int, int, str]) -> None:
+def render_batch_mode(
+    signature: tuple[int, int, int, str],
+    model_bundles: tuple[dict[str, Any], dict[str, Any]] | None = None,
+) -> None:
     render_section_header(
         "批量清单",
         "适合交付试用时一次录入 5-8 个物品，也可以上传 CSV / Excel 宿舍清单。",
@@ -278,7 +280,11 @@ def render_batch_mode(signature: tuple[int, int, int, str]) -> None:
             st.warning("请先填入有效数据")
         else:
             with st.spinner("正在进行批量预测，请稍候..."):
-                batch_result = handle_batch_prediction(batch_df, signature)
+                batch_result = handle_batch_prediction(
+                    batch_df,
+                    signature,
+                    model_bundles=model_bundles,
+                )
                 st.session_state["batch_result_df"] = batch_result["result_df"]
                 st.session_state["batch_result"] = batch_result
 

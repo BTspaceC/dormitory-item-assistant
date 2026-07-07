@@ -72,18 +72,18 @@ def main() -> None:
     render_app_header()
 
     signature = model_cache_signature()
-    # Ensure models are loaded
+    model_bundles = None
     try:
-        load_cached_models(signature)
+        model_bundles = load_cached_models(signature)
     except Exception as e:
         # Predict functions have fallback now
         st.error(f"模型加载异常，将使用降级规则模式: {e}")
 
     single_tab, batch_tab, docs_tab = st.tabs(["单件预测", "批量清单", "项目说明"])
     with single_tab:
-        render_single_mode(signature)
+        render_single_mode(signature, model_bundles=model_bundles)
     with batch_tab:
-        render_batch_mode(signature)
+        render_batch_mode(signature, model_bundles=model_bundles)
     with docs_tab:
         render_docs_page()
 

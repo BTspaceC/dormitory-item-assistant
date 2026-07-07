@@ -6,7 +6,7 @@ import html
 from typing import Any
 
 from src.features import CATEGORIES, RISK_LABELS, RISK_CARD_CLASS, EXAMPLES
-from src.predict import predict, make_prediction_input, load_models
+from src.predict import predict, make_prediction_input
 from src.merge_feedback import append_feedback_record, ensure_feedback_schema, export_trial_records
 from src.ui.utils import render_html, clean_html, format_percent, render_section_header
 
@@ -80,7 +80,11 @@ def validate_input(values: dict[str, Any]) -> list[str]:
         errors.append("请提供有效期日期。")
     return errors
 
-def handle_prediction(values: dict[str, Any], signature: tuple[int, int, int, str]) -> None:
+def handle_prediction(
+    values: dict[str, Any],
+    signature: tuple[int, int, int, str],
+    model_bundles: tuple[dict[str, Any], dict[str, Any]] | None = None,
+) -> None:
     errors = validate_input(values)
     if errors:
         for error in errors:
@@ -99,11 +103,6 @@ def handle_prediction(values: dict[str, Any], signature: tuple[int, int, int, st
         expiry_date=values["expiry_date"],
         is_damaged=values["is_damaged"],
     )
-
-    try:
-        model_bundles = load_models()
-    except FileNotFoundError:
-        model_bundles = None
 
     result = predict(input_data, model_bundles=model_bundles)
     st.session_state["last_result"] = result
@@ -282,7 +281,10 @@ def render_empty_result_panel() -> None:
             "先选择一个演示案例，或者填写自己的宿舍物品信息。点击“开始预测”后，这里会展示类别、风险等级、判断依据和用户反馈入口。"
         )
 
-def render_single_mode(signature: tuple[int, int, int, str]) -> None:
+def render_single_mode(
+    signature: tuple[int, int, int, str],
+    model_bundles: tuple[dict[str, Any], dict[str, Any]] | None = None,
+) -> None:
     render_section_header(
         "单件预测",
         "可以先载入演示案例，也可以直接填写用户自己的宿舍物品信息。",
@@ -299,7 +301,7 @@ def render_single_mode(signature: tuple[int, int, int, str]) -> None:
     form_values = render_prediction_form()
 
     if form_values["submitted"]:
-        handle_prediction(form_values, signature)
+        handle_prediction(form_values, signature, model_bundles=model_bundles)
 
     st.divider()
     render_section_header("预测结果", "集中展示风险等级判定、预测明细、图表统计和反馈入口。")
