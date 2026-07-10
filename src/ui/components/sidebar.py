@@ -16,7 +16,11 @@ def render_sidebar(metadata: dict[str, Any]) -> None:
                 help="本地复核样本与外部商品类别元数据；外部数据不参与风险训练",
             )
             st.metric("风险训练样本数", metadata.get("train_rows", "未知"), help="仅使用本地复核样本")
-            st.metric("真实留出样本数", metadata.get("real_holdout_rows", "未知"), help="未参与训练、用于评估的真实样本")
+            st.metric(
+                "本地复核留出样本数",
+                metadata.get("local_reviewed_holdout_rows", metadata.get("real_holdout_rows", "未知")),
+                help="未参与训练、用于检查当前流程的本地人工复核样本",
+            )
 
             
 def render_app_header() -> None:

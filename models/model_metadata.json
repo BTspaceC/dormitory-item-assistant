@@ -1,9 +1,10 @@
 {
-  "trained_at": "2026-07-06T20:39:12",
+  "trained_at": "2026-07-10T15:19:17",
   "train_rows": 109,
   "category_train_rows": 42109,
   "external_category_train_rows": 42000,
   "external_category_eval_rows": 7000,
+  "local_reviewed_holdout_rows": 10,
   "real_holdout_rows": 10,
   "category_labels": [
     "清洁日用",
@@ -58,6 +59,7 @@
   },
   "environment": {
     "python": "3.13.0",
+    "numpy": "2.4.2",
     "pandas": "3.0.1",
     "scikit_learn": "1.9.0",
     "joblib": "1.5.3"

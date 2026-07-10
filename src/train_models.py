@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 import joblib
+import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.compose import ColumnTransformer
@@ -130,6 +131,7 @@ def main() -> None:
         "category_train_rows": int(len(train_df) + external_train_rows),
         "external_category_train_rows": external_train_rows,
         "external_category_eval_rows": external_eval_rows,
+        "local_reviewed_holdout_rows": int(len(test_df)),
         "real_holdout_rows": int(len(test_df)),
         "category_labels": CATEGORIES,
         "risk_labels": RISK_LABELS,
@@ -144,6 +146,7 @@ def main() -> None:
         "metrics": metrics,
         "environment": {
             "python": sys.version.split()[0],
+            "numpy": np.__version__,
             "pandas": pd.__version__,
             "scikit_learn": sklearn.__version__,
             "joblib": joblib.__version__,
@@ -459,20 +462,21 @@ def write_model_report(
 
 ## 评估边界
 
-- 本地训练样本：{len(train_df)} 条；真实留出样本：{len(test_df)} 条。
-- 外部类别训练样本：{external_train_rows} 条；外部类别留出样本：{external_eval_rows} 条。
+- 本地训练样本：{len(train_df)} 条；本地人工复核留出样本：{len(test_df)} 条。
+- 外部类别训练样本：{external_train_rows} 条；同源规则映射留出样本：{external_eval_rows} 条。
 - 外部数据仅提供商品类别，不含库存、有效期或破损状态，因此**未用于风险模型训练**。
 - 外部来源：[JD dataset]({JD_DATASET_URL})，固定版本 `{JD_DATASET_COMMIT[:8]}`，许可证 `{JD_DATASET_LICENSE}`。
-- 真实留出集只有 {len(test_df)} 条，以下风险指标波动较大，应作为回归证据而非生产效果承诺。
+- 7,000 条外部评估样本与训练样本来自同一公开数据源，标签由同一套规则映射产生，不是独立人工标注。
+- 本地人工复核留出集只有 {len(test_df)} 条，以下风险指标波动较大，仅用于检查当前流程在这组样本上的表现。
 
 ## 类别模型：优化前后
 
 | 评估集 | 模型 | Accuracy | Macro F1 |
 |:---|:---|---:|---:|
-| 真实留出集 | 原始中文分词 TF-IDF | {results['baseline_category_accuracy']:.3f} | {results['baseline_category_macro_f1']:.3f} |
-| 真实留出集 | 字符 + 中文词组 TF-IDF（优化后） | {results['category_accuracy']:.3f} | {results['category_macro_f1']:.3f} |
-| 外部留出集 | 原始中文分词 TF-IDF | {results['external_baseline_category_accuracy']:.3f} | {results['external_baseline_category_macro_f1']:.3f} |
-| 外部留出集 | 字符 + 中文词组 TF-IDF（优化后） | {results['external_category_accuracy']:.3f} | {results['external_category_macro_f1']:.3f} |
+| 本地人工复核留出集 | 原始中文分词 TF-IDF | {results['baseline_category_accuracy']:.3f} | {results['baseline_category_macro_f1']:.3f} |
+| 本地人工复核留出集 | 字符 + 中文词组 TF-IDF（优化后） | {results['category_accuracy']:.3f} | {results['category_macro_f1']:.3f} |
+| 同源规则映射留出集 | 原始中文分词 TF-IDF | {results['external_baseline_category_accuracy']:.3f} | {results['external_baseline_category_macro_f1']:.3f} |
+| 同源规则映射留出集 | 字符 + 中文词组 TF-IDF（优化后） | {results['external_category_accuracy']:.3f} | {results['external_category_macro_f1']:.3f} |
 
 ## 风险决策：优化前后
 
@@ -481,29 +485,29 @@ def write_model_report(
 | 随机森林（原端到端策略） | {results['risk_model_accuracy']:.3f} | {results['risk_model_macro_f1']:.3f} |
 | 规则基线 | {results['rule_baseline_accuracy']:.3f} | {results['rule_baseline_macro_f1']:.3f} |
 | **混合风险决策（优化后）** | **{results['risk_hybrid_accuracy']:.3f}** | **{results['risk_hybrid_macro_f1']:.3f}** |
-| 随机森林（人工真类别，仅诊断） | {results['risk_oracle_accuracy']:.3f} | {results['risk_oracle_macro_f1']:.3f} |
+| 随机森林（人工复核类别，仅诊断） | {results['risk_oracle_accuracy']:.3f} | {results['risk_oracle_macro_f1']:.3f} |
 
 混合策略把确定性条件交给规则：30 天内到期直接进入高风险，低库存且高频使用直接建议补货；随机森林负责其余模糊边界。无有效期物品只有通用破损标记时先校准为“需要关注”，避免把轻微磨损与明确失效混为一类。
 
-## 真实留出样本明细
+## 本地人工复核留出样本明细
 
-| 物品 | 真实类别 | 预测类别 | 真实风险 | 原模型风险 | 混合风险 | 决策来源 | 规则基线 |
+| 物品 | 复核类别 | 预测类别 | 复核风险 | 原模型风险 | 混合风险 | 决策来源 | 规则基线 |
 |:---|:---|:---|:---|:---|:---|:---|:---|
 {chr(10).join(comparison_rows)}
 
 ## 混合风险决策混淆矩阵
 
-| 真实标签 \\ 预测标签 | {' | '.join(RISK_LABELS)} |
+| 复核标签 \\ 预测标签 | {' | '.join(RISK_LABELS)} |
 |:---|---:|---:|---:|---:|
 {chr(10).join(matrix_rows)}
 
-## 类别模型详细报告（真实留出集）
+## 类别模型详细报告（本地人工复核留出集）
 
 ```text
 {results['category_report']}
 ```
 
-## 混合风险决策详细报告（真实留出集）
+## 混合风险决策详细报告（本地人工复核留出集）
 
 ```text
 {results['risk_report']}
